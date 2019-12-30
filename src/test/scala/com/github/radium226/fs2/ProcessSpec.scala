@@ -145,7 +145,7 @@ class ProcessSpec extends AbstractSpec {
         logTo[IO](logger, LogLevel.info, logBlocker),
         logTo[IO](logger, LogLevel.warn, logBlocker)
       )
-      exitCode      <- process(keepExitCode)
+      exitCode       <- process(keepExitCode)
     } yield exitCode).interruptAfter(1 second).compile.drain
   }
 
