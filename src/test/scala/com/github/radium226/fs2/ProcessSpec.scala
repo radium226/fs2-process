@@ -137,7 +137,7 @@ class ProcessSpec extends AbstractSpec {
       logBlocker     <- Stream.resource[IO, Blocker](Blocker[IO])
       chunkSize       = 1024 * 1024
       catProcess     <- process.stream[IO](List("cat", "src/test/resources/Yes.webm"), processBlocker, chunkSize)
-      keepStdOut  = Keep.stdOut(
+      keepStdOut      = Keep.stdOut(
         logTo[IO](logger, LogLevel.info, logBlocker)
       )
       process        <- catProcess(keepStdOut).through(process.pipe[IO](List("mplayer", "-"), processBlocker, chunkSize))
