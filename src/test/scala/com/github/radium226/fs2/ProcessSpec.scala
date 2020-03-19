@@ -1,7 +1,7 @@
 package com.github.radium226.fs2
 
 import cats.effect.{Blocker, ContextShift, ExitCode, IO, Sync}
-import fs2._
+import _root_.fs2._
 import com.github.radium226.AbstractSpec
 import com.github.radium226.fs2.process.{Keep, Process}
 import cats.implicits._

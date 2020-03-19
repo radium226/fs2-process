@@ -1,7 +1,7 @@
 package com.github.radium226.fs2
 
 import cats.effect.{Blocker, Concurrent, ContextShift, Sync}
-import fs2._
+import _root_.fs2._
 import java.lang.{Process => JavaProcess}
 
 import cats.Functor
@@ -33,13 +33,13 @@ object process {
 
     }
 
-    def stdOut[F[_]](implicit F: Functor[F]): Keep[F, Byte] = stdOut[F]({ stream: Stream[F, Byte] => stream.drain })
+    def stdOut[F[_]](implicit F: Sync[F]): Keep[F, Byte] = stdOut[F]({ stream: Stream[F, Byte] => stream.through(fs2.text.utf8Decode[F]).showLines(System.err).drain })
 
     def stdOut[F[_]](stdErrPipe: Pipe[F, Byte, Unit])(implicit F: Functor[F]): Keep[F, Byte] = StdOut[F](stdErrPipe)
 
-    def exitCode[F[_]]: Keep[F, Int] = exitCode()
+    def exitCode[F[_]](implicit F: Sync[F]): Keep[F, Int] = exitCode({ stream: Stream[F, Byte] => stream.through(fs2.text.utf8Decode[F]).showLines(System.out).drain }, { stream: Stream[F, Byte] => stream.through(fs2.text.utf8Decode[F]).showLines(System.err).drain })
 
-    def exitCode[F[_]](stdOutPipe: Pipe[F, Byte, Unit] = { stream: Stream[F, Byte] => stream.drain }, stdErrPipe: Pipe[F, Byte, Unit] = { stream: Stream[F, Byte] => stream.drain }): Keep[F, Int] = ExitCode[F](stdOutPipe, stdErrPipe)
+    def exitCode[F[_]](stdOutPipe: Pipe[F, Byte, Unit], stdErrPipe: Pipe[F, Byte, Unit]): Keep[F, Int] = ExitCode[F](stdOutPipe, stdErrPipe)
 
   }
 
@@ -58,6 +58,7 @@ object process {
 
   def pipe[F[_]](command: List[String], blocker: Blocker, chunkSize: Int)(implicit F: Concurrent[F], contextShift: ContextShift[F]): Pipe[F, Byte, Process[F]] = { stream =>
     Stream.eval[F, JavaProcess](blocker.delay({
+      println(s"Starting ${command}")
       new ProcessBuilder()
         .command(command: _*)
         .redirectInput(ProcessBuilder.Redirect.PIPE)
@@ -69,7 +70,7 @@ object process {
       val stdout = fs2.io.readInputStream[F](F.delay(process.getInputStream), chunkSize, blocker)
       val stderr = fs2.io.readInputStream[F](F.delay(process.getErrorStream), chunkSize, blocker)
 
-      Stream[F, Process[F]](new Process[F](process, stdout, stderr, Stream.eval(blocker.delay(process.waitFor())))).concurrently(stdin.drain)
+      Stream.emit[F, Process[F]](new Process[F](process, stdout, stderr, Stream.eval(blocker.delay(process.waitFor())))).concurrently(stdin.drain)
     })
 
   }

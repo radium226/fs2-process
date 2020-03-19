@@ -5,7 +5,6 @@ import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.{ExecutionContext, Future}
-
 import cats.effect.{ContextShift, IO, SyncIO, Timer}
 import cats.implicits._
 
